@@ -26,7 +26,7 @@ func GetSheetValues(out chan sheetValue, client *http.Client, valueColumn, urlCo
 
 	// Prints the names and majors of students in a sample spreadsheet:
 	// https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit
-	readRange := fmt.Sprintf("%v!%v%v:%v%v", SPREADSHEET_SHEET, valueColumn, START_ROW, urlColumn, END_ROW)
+	readRange := fmt.Sprintf("%v!%v%v:%v%v", SPREADSHEET_SHEET, urlColumn, START_ROW, urlColumn, END_ROW)
 	resp, err := srv.Spreadsheets.Values.Get(SPREADSHEET_ID, readRange).Do()
 	if err != nil {
 		log.Fatalf("Unable to retrieve data from sheet: %v", err)
@@ -37,10 +37,27 @@ func GetSheetValues(out chan sheetValue, client *http.Client, valueColumn, urlCo
 
 	for i, row := range resp.Values {
 		out <- sheetValue{
-			url:       fmt.Sprintf("%s", row[1]),
+			url:       fmt.Sprintf("%s", row[0]),
 			valueCell: fmt.Sprintf("%v%v", valueColumn, START_ROW+i),
-			value:     fmt.Sprintf("%s", row[0]),
 		}
+	}
+}
+
+func UpdateSheetValues(in chan inflationValue, client *http.Client, valueColumn string) {
+	ctx := context.Background()
+	srv, err := sheets.NewService(ctx, option.WithHTTPClient(client))
+	if err != nil {
+		log.Fatalf("Unable to retrieve Sheets client: %v", err)
+	}
+
+	var vr sheets.ValueRange
+	for inval := range in {
+		vr.Values = append(vr.Values, []interface{}{inval.value})
+	}
+
+	writeRange := fmt.Sprintf("%v!%v%v:%v%v", SPREADSHEET_SHEET, valueColumn, START_ROW, valueColumn, END_ROW)
+	if _, err := srv.Spreadsheets.Values.Update(SPREADSHEET_ID, writeRange, &vr).ValueInputOption("RAW").Do(); err != nil {
+		log.Fatalf("Update failed on database: %v", err)
 	}
 }
 
