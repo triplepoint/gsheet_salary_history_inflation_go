@@ -69,7 +69,7 @@ func (c *BLSCache) Add(url string, value float64) {
 }
 
 func NewCache() *BLSCache {
-	cache := BLSCache{}
+	var cache BLSCache
 	cache.Load()
 	return &cache
 }
