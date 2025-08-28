@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 	"sync"
 )
 
@@ -23,19 +22,8 @@ type inflationValue struct {
 	value     float64 // The value to write into the cell, if any
 }
 
-func getSheetValues(out chan sheetValue, client *http.Client, valueColumn, urlColumn string, wg *sync.WaitGroup) {
-	defer func() {
-		close(out)
-		wg.Done()
-	}()
-	GetSheetValues(out, client, valueColumn, urlColumn)
-}
-
-func getInflationValues(in chan sheetValue, out chan inflationValue, cache *BLSCache, wg *sync.WaitGroup) {
-	defer func() {
-		close(out)
-		wg.Done()
-	}()
+func getInflationValues(in chan sheetValue, out chan inflationValue, cache *BLSCache) {
+	defer close(out)
 	for inval := range in {
 		value, err := GetBlsValue(inval.url, cache)
 		if err != nil {
@@ -47,11 +35,6 @@ func getInflationValues(in chan sheetValue, out chan inflationValue, cache *BLSC
 			value:     value,
 		}
 	}
-}
-
-func updateSpreadsheetValues(in chan inflationValue, client *http.Client, valueColumn string, wg *sync.WaitGroup) {
-	defer wg.Done()
-	UpdateSheetValues(in, client, valueColumn)
 }
 
 func run(valueColumn string, urlColumn string) {
@@ -69,11 +52,11 @@ func run(valueColumn string, urlColumn string) {
 
 	sheetValChan := make(chan sheetValue)
 	inflationValChan := make(chan inflationValue)
+
 	var wg sync.WaitGroup
-	wg.Add(3)
-	go getSheetValues(sheetValChan, client, valueColumn, urlColumn, &wg)
-	go getInflationValues(sheetValChan, inflationValChan, cache, &wg)
-	go updateSpreadsheetValues(inflationValChan, client, valueColumn, &wg)
+	wg.Go(func() { GetSheetValues(sheetValChan, client, valueColumn, urlColumn) })
+	wg.Go(func() { getInflationValues(sheetValChan, inflationValChan, cache) })
+	wg.Go(func() { UpdateSheetValues(inflationValChan, client, valueColumn) })
 	wg.Wait()
 }
 

@@ -18,6 +18,7 @@ import (
 
 // Load the relevant fields from the spreadsheet and emit them onto the given channel
 func GetSheetValues(out chan sheetValue, client *http.Client, valueColumn, urlColumn string) {
+	defer close(out)
 	ctx := context.Background()
 	srv, err := sheets.NewService(ctx, option.WithHTTPClient(client))
 	if err != nil {
