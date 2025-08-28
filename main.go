@@ -1,15 +1,17 @@
+/*
+gsheet_salary_history_inflation_go populates inflation-corrected data in a spreadsheet.
+see the (private) spreadsheet: https://docs.google.com/spreadsheets/d/13goqcSbMKCq--j235GAN_GPO8ZH60cdd25xW1lhHLq0/edit?usp=sharing
+
+Generally, this program:
+- Fetches a list of URLs from the spreadsheet
+- Uses those URLs to fetch the inflation-corrected value from the Bureau of Labor Statistics' CPI service
+- Writes those fetched values back to the spreadsheet
+*/
 package main
 
 import (
 	"fmt"
 	"sync"
-)
-
-const (
-	SPREADSHEET_ID    = "13goqcSbMKCq--j235GAN_GPO8ZH60cdd25xW1lhHLq0"
-	SPREADSHEET_SHEET = "Chart Helper"
-	START_ROW         = 2
-	END_ROW           = 1500
 )
 
 type sheetValue struct {
@@ -37,16 +39,10 @@ func getInflationValues(in chan sheetValue, out chan inflationValue, cache *BLSC
 	}
 }
 
+// Perform the ETL action for a pair of columns.
+// The valueColumn is a letter-name column in the spreadsheet where the inflation-corrected value will be written.
+// The urlColumn is a letter-name column in the spreadsheet where the prepared URL to call on the BLS site is read.
 func run(valueColumn string, urlColumn string) {
-	// see the (private) spreadsheet: https://docs.google.com/spreadsheets/d/13goqcSbMKCq--j235GAN_GPO8ZH60cdd25xW1lhHLq0/edit?usp=sharing
-	// Relevant features are 2 columns, the "URL Column" and the "Value Column"
-	// The URL column is prebuilt in the spreadsheet to create a URL call to the BLS inflation conversion site
-	// The Value Column is where we want to write the value that we scrape out of the URL's result.
-	//
-	// - Fetch the values from the spreadsheet
-	// - Fetch the inflation-corrected value from the CPI service
-	// - Update the spreadsheet
-
 	client := Auth()    // The Google spreadsheet client
 	cache := NewCache() // A cache for avoiding calling the BLS when we already know the answer
 

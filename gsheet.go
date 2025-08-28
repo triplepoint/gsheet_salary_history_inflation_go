@@ -14,6 +14,13 @@ import (
 	"google.golang.org/api/sheets/v4"
 )
 
+const (
+	SPREADSHEET_ID    = "13goqcSbMKCq--j235GAN_GPO8ZH60cdd25xW1lhHLq0" // Which spreadsheet are we reading/writing from/to?
+	SPREADSHEET_SHEET = "Chart Helper"                                 // Which sheet on the spreadsheet are we interested in?
+	START_ROW         = 2                                              // This never changes, it's the first row with actual data in it
+	END_ROW           = 1500                                           // From time to time, this will need to be bumped out, as the spreadsheet grows.
+)
+
 // See: https://developers.google.com/workspace/sheets/api/quickstart/go
 
 // Load the relevant fields from the spreadsheet and emit them onto the given channel

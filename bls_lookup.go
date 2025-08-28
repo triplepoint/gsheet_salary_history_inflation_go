@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	CACHE_DB                = "localdb.json"
-	API_THROTTLE_DELAY_MSEC = 250
+	CACHE_DB                = "localdb.json" // A file where we're storing the cached lookup values as a JSON object
+	API_THROTTLE_DELAY_MSEC = 250            // How many ms should we wait after we call the BLS, to avoid hammering their service?
 )
 
 type BLSCache struct {
